@@ -1,0 +1,176 @@
+---
+title: "Wages"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+wages <- read_csv("~/Wages/data/wages.csv")
+
+skimr::skim(wages)
+```
+
+# Exploratory Data Analysis
+
+```{r}
+head(wages)
+```
+
+```{r}
+# wages by occupation
+wages |> 
+  group_by(occupation, gender) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(occupation, avg_wage), avg_wage, colour = occupation)) +
+  geom_boxplot() +
+  labs(
+    x = "Average Wage",
+    y = "Occupation",
+    title = "Bar Plot Showing the Average Wages Per Occupation"
+  )
+```
+
+```{r}
+#wages by gender
+wages |> 
+  group_by(gender, occupation) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(gender, avg_wage), avg_wage, colour = gender)) +
+  geom_boxplot() +
+  labs(
+    x = "Average Wage",
+    y = "Gender",
+    title = "Bar Plot Showing the Average Wages Per Gender"
+  )
+
+```
+
+```{r}
+
+#wages by sector
+wages |> 
+  group_by(sector, gender) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(sector, avg_wage), avg_wage, colour = sector)) +
+  geom_boxplot() +
+  labs(
+    x = "Average Wage",
+    y = "Sector",
+    title = "Bar Plot Showing the Average Wages Per Sector"
+  )
+
+```
+
+```{r}
+
+#wages by ethnicity
+wages |> 
+  group_by(gender, ethnicity) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(ethnicity, avg_wage), avg_wage, colour = ethnicity)) +
+  geom_boxplot() +
+  labs(
+    x = "Average Wage",
+    y = "Ethnicity",
+    title = "Bar Plot Showing the Average Wages Per ethnicity"
+  )
+
+```
+
+```{r}
+#wages by married
+wages |> 
+  group_by(gender, married) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(married, avg_wage), avg_wage, colour = married)) +
+  geom_boxplot() +
+  labs(
+    x = "Average Wage",
+    y = "married",
+    title = "Bar Plot Showing the Average Wages Per married"
+  )
+```
+
+```{r}
+#correlation between numeric variables 
+library(corrr)
+wages_cor <- wages |> 
+  select(1:4) |> 
+  correlate()
+wages_cor
+```
+
+```{r}
+rplot(wages_cor)
+```
+
+# Statistical Analysis
+
+```{r}
+#t-test on married workers
+t.test(wage ~ married, data = wages)
+```
+
+```{r}
+#t-test on gender
+t.test(wage ~ gender, data = wages)
+```
+
+```{r}
+#t-test on region
+t.test(wage ~ region, data = wages)
+```
+
+
+```{r}
+#anova on ethnicity
+summary(aov(wage ~ ethnicity, data = wages))
+```
+
+```{r}
+#anova on occupation
+summary(aov(wage ~ occupation, data = wages))
+```
+```{r}
+#anova on sector
+summary(aov(wage ~ sector, data = wages))
+```
+
+# SEM Analysis
+```{r}
+# Load the required packages
+library(lavaan)
+
+# Specify the model
+model <- '
+wage ~ education + experience + age
+wage ~ ethnicity + region + gender + occupation + sector + married
+'
+
+# Fit the model to the data
+fit <- sem(model, data = data)
+
+# Summary of the model fit
+summary(fit)
+
+semPaths(fit, layout = "tree")
+
+```
+
+```{r}
+# Install and load the 'lavaan' package
+install.packages("lavaan")
+library(lavaan)
+
+# Define the SEM model with 'wage' as the dependent variable and 'education', 'experience', 'age', 'ethnicity', 'region', 'gender', 'occupation', 'sector', and 'married' as the independent variables
+model <- ' wage ~ education + experience + age + ethnicity + region + gender + occupation + sector + married'
+
+# Fit the SEM model to the data
+fit <- sem(model, data = mydata)
+
+# Plot the SEM diagram
+plot(fit, type = "path")
+
+```
+
