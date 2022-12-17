@@ -6,7 +6,7 @@ editor: visual
 
 ```{r}
 library(tidyverse)
-wages <- read_csv("~/Wages/data/wages.csv")
+refactored_wages <- wages <- read_csv("~/Wages/data/wages.csv")
 
 skimr::skim(wages)
 ```
@@ -139,38 +139,54 @@ summary(aov(wage ~ sector, data = wages))
 
 # SEM Analysis
 ```{r}
-# Load the required packages
-library(lavaan)
-
-# Specify the model
-model <- '
-wage ~ education + experience + age
-wage ~ ethnicity + region + gender + occupation + sector + married
-'
-
-# Fit the model to the data
-fit <- sem(model, data = data)
-
-# Summary of the model fit
-summary(fit)
-
-semPaths(fit, layout = "tree")
+#sem data cleaning
+refactored_wages$gender <- recode(refactored_wages$gender, 
+                                  female = 0, 
+                                  male = 1)
+refactored_wages$ethnicity <- recode(refactored_wages$ethnicity, 
+                                     hispanic = 1, 
+                                     cauc = 2,
+                                     other = 3)
+refactored_wages$region <- recode(refactored_wages$region, 
+                                     other = 1, 
+                                     south = 2)
+refactored_wages$occupation <- recode(refactored_wages$occupation, 
+                                     worker = 1, 
+                                     management = 2,
+                                     sales = 3,
+                                     office = 4,
+                                     services = 5,
+                                     technical = 6)
+refactored_wages$sector <- recode(refactored_wages$sector, 
+                                     manufacturing = 1, 
+                                     other= 2,
+                                     construction = 3)
+refactored_wages$married <- recode(refactored_wages$married, 
+                                     no = 0, 
+                                     yes = 1)
+refactored_wages$union <- recode(refactored_wages$union, 
+                                     no = 0, 
+                                     yes = 1)
 
 ```
 
 ```{r}
+wages
+```
+
+```{r}
 # Install and load the 'lavaan' package
-install.packages("lavaan")
 library(lavaan)
 
 # Define the SEM model with 'wage' as the dependent variable and 'education', 'experience', 'age', 'ethnicity', 'region', 'gender', 'occupation', 'sector', and 'married' as the independent variables
-model <- ' wage ~ education + experience + age + ethnicity + region + gender + occupation + sector + married'
+model <- ' wage ~ education + experience + ethnicity + region + gender + occupation + sector + married'
 
 # Fit the SEM model to the data
-fit <- sem(model, data = mydata)
+fit <- sem(model, data = refactored_wages)
 
-# Plot the SEM diagram
-plot(fit, type = "path")
+summary(fit)
+
+fitmeasures(fit)
 
 ```
 
