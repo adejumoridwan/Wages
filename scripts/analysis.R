@@ -1,7 +1,10 @@
 
   
-   
+#library installed
 library(tidyverse)
+library(patchwork)
+library(corrr)
+
 refactored_wages <- wages <- read_csv("~/Wages/data/wages.csv")
 
 skimr::skim(wages)
@@ -9,98 +12,160 @@ skimr::skim(wages)
 
 # Exploratory Data Analysis
 
- 
+#Descriptive Statistics
+
+prop.table(table(wages$ethnicity))
+prop.table(table(wages$region))
+prop.table(table(wages$gender))
+prop.table(table(wages$occupation))
+prop.table(table(wages$sector))
+prop.table(table(wages$union))
+prop.table(table(wages$married))
+
 head(wages)
+
+#Distribution of wage
+q1 <- wages |> 
+  ggplot(aes(wage)) +
+  geom_density() +
+  labs(
+    x = "Wage",
+    title = "Wages"
+  )
+
+#Distribution of experience
+q2 <- wages |> 
+  ggplot(aes(experience)) +
+  geom_density() +
+  labs(
+    x = "Experience",
+    title = "Experience"
+  )
+
+#Distribution of education
+q3 <- wages |> 
+  ggplot(aes(education)) +
+  geom_density() +
+  labs(
+    x = "'Education",
+    title = "Education"
+  )
+
+#Distribution of age
+q4 <- wages |> 
+  ggplot(aes(age)) +
+  geom_density() +
+  labs(
+    x = "Age",
+    title = "Age"
+  )
+
+#combined plots of variables distribution
+q0 <- (q1 + q2)/(q3 + q4)
   
 # wages by union
-wages |> 
-  group_by(union, gender) |> 
+p1 <- wages |> 
+  group_by(union) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(union, avg_wage), avg_wage, colour = union)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(union, avg_wage), avg_wage, fill = union)) +
+  geom_col() +
   labs(
     x = "Union",
     y = "Average Wage",
-    title = "Average Wages By Union"
+    title = "Union"
   )
 
 # wages by occupation
-wages |> 
+p2 <- wages |> 
   group_by(occupation, gender) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(occupation, avg_wage), avg_wage, colour = occupation)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(occupation, avg_wage), avg_wage, fill = occupation)) +
+  geom_col() +
   labs(
     x = "Occupation",
     y = "Average Wage",
-    title = "Average wage by occupation"
+    title = "Occupation"
   )
   
 
  
 #wages by gender
-wages |> 
+p3 <- wages |> 
   group_by(gender, occupation) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(gender, avg_wage), avg_wage, colour = gender)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(gender, avg_wage), avg_wage, fill = gender)) +
+  geom_col() +
   labs(
     x = "Gender",
     y = "Average Wage",
-    title = "Average Wage By Gender"
+    title = "Gender"
   )
 
 
 #wages by sector
-wages |> 
+p4 <- wages |> 
   group_by(sector, gender) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(sector, avg_wage), avg_wage, colour = sector)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(sector, avg_wage), avg_wage, fill = sector)) +
+  geom_col() +
   labs(
     x = "Sector",
     y = "Average Wage",
-    title = "Average Wages By Sector"
+    title = "Sector"
   )
 
 #wages by ethnicity
-wages |> 
+p5 <- wages |> 
   group_by(gender, ethnicity) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(ethnicity, avg_wage), avg_wage, colour = ethnicity)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(ethnicity, avg_wage), avg_wage, fill = ethnicity)) +
+  geom_col() +
   labs(
     x = "Ethnicity",
     y = "Average Wage",
-    title = "Average Wages By Ethnicity"
+    title = "Ethnicity"
   )
 
   
 
  
 #wages by married
-wages |> 
+p6 <- wages |> 
   group_by(gender, married) |> 
   summarize(avg_wage = mean(wage)) |> 
-  ggplot(aes(reorder(married, avg_wage), avg_wage, colour = married)) +
-  geom_boxplot() +
+  ggplot(aes(reorder(married, avg_wage), avg_wage, fill = married)) +
+  geom_col() +
   labs(
     x = "Marital Status",
     y = "Average Wage",
-    title = "Average Wage By Marital Status"
+    title = "Marital Status"
   )
   
 
+#wages by region
+p7 <- wages |> 
+  group_by(region, gender) |> 
+  summarize(avg_wage = mean(wage)) |> 
+  ggplot(aes(reorder(region, avg_wage), avg_wage, fill = region)) +
+  geom_col() +
+  labs(
+    x = "Region",
+    y = "Average Wage",
+    title = "Region"
+  )
+
+
+#combined plots of ethnicity distribution
+p0 <- (p1 + p2)/(p3 + p7)/(p5 + p6)
  
 #correlation between numeric variables 
-library(corrr)
+
 wages_cor <- wages |> 
   select(1:4) |> 
   correlate()
 wages_cor
   
-
- 
+#correlaation plot
 rplot(wages_cor)
   
 
@@ -112,16 +177,17 @@ t.test(wage ~ married, data = wages)
 t.test(wage ~ gender, data = wages)
 #t-test on region
 t.test(wage ~ region, data = wages)
+#t-test on union
+t.test(wage ~ union, data = wages)
 
-#anova on ethnicity
-summary(aov(wage ~ ethnicity, data = wages))
-#anova on occupation
-summary(aov(wage ~ occupation, data = wages))
-#anova on sector
-summary(aov(wage ~ sector, data = wages))
-# SEM Analysis
+#anova on ethnicity, occupation and sector
+summary(aov(wage ~ ethnicity + occupation + sector, data = wages))
  
-#Data cleaning for regression
+#Data cleaning for regression analysis
+
+#normalization of predictor variable.
+refactored_wages$wage <- sqrt(refactored_wages$wage)
+
 refactored_wages$gender <- recode(refactored_wages$gender, 
                                   female = 0, 
                                   male = 1)
